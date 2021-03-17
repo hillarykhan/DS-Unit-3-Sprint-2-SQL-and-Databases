@@ -1,5 +1,6 @@
 import psycopg2
-
+from psycopg2.extras import execute_values
+import json
 
 # Connect to ElephantSQL-hosted PostgresSQL
 # IMPORTANT: DO NOT COMMIT with credentials hard-coded
@@ -51,13 +52,29 @@ print(result)
 ### chaining commands like this doesn't work with psycopg
 
 # INSERT DATA
-insertion_sql = """
-INSERT INTO test_table (name, data) VALUES -- filling values for the name and data columns (id auto generates)
-('A row name', null), -- add the data as tuples (first value corresponds to order above (name) second to data)
-('Another row, with JSON', '{"a": 1, "b": ["dog", "cat", 42], "c": true}'::JSONB -- :: converts/casts data types - in this case from a string to a JSON blob
-);
-"""
-cur.execute(insertion_sql)
+# insertion_sql = """
+# INSERT INTO test_table (name, data) VALUES -- filling values for the name and data columns (id auto generates)
+# ('A row name', null), -- add the data as tuples (first value corresponds to order above (name) second to data)
+# ('Another row, with JSON', '{"a": 1, "b": ["dog", "cat", 42], "c": true}'::JSONB -- :: converts/casts data types - in this case from a string to a JSON blob
+# );
+# """
+# cur.execute(insertion_sql)
+
+# Another method to inserting data without hardcoding python dictionaries, etc.
+# (object-oriented approach)
+my_dict = {"a": 1, "b": ["dog", "cat", 42], "c": True}
+# insertion_query = "INSERT INTO test_table (name, data) VALUES (%s, %s)"
+# cur.execute(insertion_query, ('A row name', 'null'))    # functional applied to object hence object-oriented
+# cur.execute(insertion_query, ('Another row, with JSONNN', json.dumps(my_dict))
+
+# Problem is that the above approach does one row at a time
+# Passing multiple rows into a table (functional approach):
+insertion_query = f"INSERT INTO test_table (name, data) VALUES %s"
+execute_values(cur, insertion_query, [  # from psycopg2.extras import execute_values
+    ('A rowwwww', 'null'),
+    ('Another row, with JSONNNNNN', json.dumps(my_dict)),   # import json
+    ('Third row', '3')
+])  # data must be in a list of tuples!!!
 
 # FYI: When we modify the contents of a table with a CREATE, DROP, INSERT, etc.
 # statement, we need an additional step: commit/save results
@@ -69,3 +86,4 @@ conn.commit()
 # Good practice to all close the cursor and connection
 cur.close()
 conn.close()
+

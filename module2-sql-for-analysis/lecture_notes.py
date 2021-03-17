@@ -40,13 +40,32 @@ print("CURSOR", cur)
 cur.execute('SELECT * from test_table;')
 
 # Note: nothing happened yet! We need to *fetch* from cursor
+# FETCH DATA
 result = cur.fetchall()
 print("RESULT: ", type(result))
 print(result)
 
-
 ### If you see something like (1, 'A row name', None), congrats!
 ### You've interacted with your database from Python
-
-### in sqlite: result = cur.execute('SELECT * from test_table;').fetchall()
+### FYI: in sqlite: result = cur.execute('SELECT * from test_table;').fetchall()
 ### chaining commands like this doesn't work with psycopg
+
+# INSERT DATA
+insertion_sql = """
+INSERT INTO test_table (name, data) VALUES -- filling values for the name and data columns (id auto generates)
+('A row name', null), -- add the data as tuples (first value corresponds to order above (name) second to data)
+('Another row, with JSON', '{"a": 1, "b": ["dog", "cat", 42], "c": true}'::JSONB -- :: converts/casts data types - in this case from a string to a JSON blob
+);
+"""
+cur.execute(insertion_sql)
+
+# FYI: When we modify the contents of a table with a CREATE, DROP, INSERT, etc.
+# statement, we need an additional step: commit/save results
+# Otherwise, a primary key will be allocated to the rows but they won't actually
+# appear in the table.
+# Commit(Save) table modifications (in this case, inserting rows):
+conn.commit()
+
+# Good practice to all close the cursor and connection
+cur.close()
+conn.close()
